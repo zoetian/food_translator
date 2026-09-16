@@ -1,0 +1,45 @@
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.language-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.preview {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.result {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ddd;
+}
+
+.translated-name {
+  font-style: italic;
+  color: #555;
+}
+
+.confidence {
+  font-size: 0.85rem;
+  color: #777;
+}
