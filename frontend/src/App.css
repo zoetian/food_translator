@@ -1,22 +1,18 @@
 .page {
-  max-width: 480px;
+  width: 100%;
+  max-width: 720px;
   margin: 0 auto;
   padding: 2rem 1rem;
   font-family: system-ui, sans-serif;
+  box-sizing: border-box;
 }
 
 .form {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
   margin-top: 1.5rem;
-}
-
-.language-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
 }
 
 .preview {
@@ -28,27 +24,48 @@
   color: #c0392b;
 }
 
-.matched-image {
-  margin-top: 1.5rem;
-}
-
-.matched-image img {
-  max-width: 100%;
-  border-radius: 8px;
-}
-
-.result {
+.result-grid {
   margin-top: 2rem;
-  padding-top: 1rem;
+  padding-top: 1.5rem;
   border-top: 1px solid #ddd;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.result-col {
+  flex: 1 1 260px;
+  max-width: 320px;
+  text-align: center;
+}
+
+.result-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.col-label {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.description {
+  font-size: 0.95rem;
 }
 
 .translated-name {
   font-style: italic;
   color: #555;
-}
-
-.confidence {
-  font-size: 0.85rem;
-  color: #777;
 }

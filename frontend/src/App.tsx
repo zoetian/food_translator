@@ -16,7 +16,6 @@ interface IdentifyResult {
 function App() {
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [targetLanguage, setTargetLanguage] = useState('English')
   const [result, setResult] = useState<IdentifyResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -39,7 +38,6 @@ function App() {
 
     const formData = new FormData()
     formData.append('photo', file)
-    formData.append('target_language', targetLanguage)
 
     try {
       const res = await fetch(`${API_URL}/api/identify`, {
@@ -61,7 +59,7 @@ function App() {
   return (
     <main className="page">
       <h1>Foodify</h1>
-      <p>Take or upload a photo of anything, and we'll find the food it most resembles.</p>
+      <p>Every photo hides a food twin.</p>
 
       <form onSubmit={handleSubmit} className="form">
         <input
@@ -71,17 +69,7 @@ function App() {
           onChange={handleFileChange}
         />
 
-        <label className="language-field">
-          Translate to
-          <input
-            type="text"
-            value={targetLanguage}
-            onChange={(e) => setTargetLanguage(e.target.value)}
-            placeholder="English"
-          />
-        </label>
-
-        {previewUrl && <img src={previewUrl} alt="Preview" className="preview" />}
+        {previewUrl && !result && <img src={previewUrl} alt="Preview" className="preview" />}
 
         <button type="submit" disabled={!file || loading}>
           {loading ? 'Finding a match…' : 'Find my food match'}
@@ -90,23 +78,31 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
-      {result?.image_url && (
-        <div className="matched-image">
-          <img src={result.image_url} alt={result.food_name} />
-        </div>
-      )}
-
       {result && (
-        <section className="result">
-          <h2>{result.food_name}</h2>
-          {result.translated_name && (
-            <p className="translated-name">
-              {result.translated_name}
-              {result.target_language ? ` (${result.target_language})` : ''}
-            </p>
-          )}
-          <p>{result.food_visual_description}</p>
-          <p className="confidence">Confidence: {result.confidence}</p>
+        <section className="result-grid">
+          <div className="result-col">
+            {previewUrl && (
+              <div className="result-image">
+                <img src={previewUrl} alt="Original upload" />
+              </div>
+            )}
+            <p className="col-label">Original</p>
+          </div>
+          <div className="result-col">
+            {result.image_url && (
+              <div className="result-image">
+                <img src={result.image_url} alt={result.food_name} />
+              </div>
+            )}
+            <h2>{result.food_name}</h2>
+            {result.translated_name && (
+              <p className="translated-name">
+                {result.translated_name}
+                {result.target_language ? ` (${result.target_language})` : ''}
+              </p>
+            )}
+            <p className="description">{result.food_visual_description}</p>
+          </div>
         </section>
       )}
     </main>
