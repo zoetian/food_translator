@@ -94,7 +94,8 @@ Proposed flow: `client captures/uploads photo -> backend API -> recognition serv
 
 ### TODOs
 
-- make sure we don't expose the api keys
-- control and monitor the image api billing budget
-- display the chain of thoughts while fetching api results
+- [x] make sure we don't expose the api keys — `.env` files are gitignored in both `backend/` and `frontend/` and nothing is tracked in git; the frontend only ever calls our own backend, never OpenAI directly.
+- [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash, so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. Both the cache and the daily counter are in-memory/per-process (reset on restart, no size cap) — fine for local dev, but revisit with persistent storage or a hard spend cap before this handles real multi-user traffic.
+- [ ] display the chain of thoughts while fetching api results
+- [ ] add deployment instructions
 
