@@ -72,7 +72,7 @@ def identify_dish(image_bytes: bytes, content_type: str, target_language: str) -
                             "The food_visual_description field must describe only the generated food's "
                             "appearance, including its shape, color, texture, filling, toppings, and "
                             "presentation. It must not mention the source image, animals, people, body "
-                            "parts, faces, fur, characters, or expressions. "
+                            "parts, faces, fur, characters, or expressions. Keep it to exactly 1 concise sentence. "
 
                             "Use match_explanation separately to explain why the original subject visually "
                             "resembles the selected food. This field may mention features of the original "
