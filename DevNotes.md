@@ -68,6 +68,51 @@ Proposed flow: `client captures/uploads photo -> backend API -> recognition serv
 - Rate-limit uploads per user/IP to control LLM API cost exposure and abuse.
 - If self-hosting CLIP inference, keep the model server on a private network, not public-facing.
 
+### Deployment
+
+**Decision: split hosting** — GitHub Pages only serves static files, so it
+can't run the FastAPI backend (needs to execute Python, hold
+`OPENAI_API_KEY` server-side, make outbound OpenAI calls). The frontend and
+backend deploy to two different hosts:
+
+- **Frontend → GitHub Pages.** [`.github/workflows/deploy-frontend.yml`](.github/workflows/deploy-frontend.yml)
+  builds `frontend/` on every push to `main` (or manual dispatch) and
+  publishes `frontend/dist` via the official `actions/deploy-pages` action.
+  [`frontend/vite.config.ts`](frontend/vite.config.ts) sets `base:
+  '/food_translator/'` for production builds only (dev server stays at `/`),
+  since a GitHub Pages project site is served at
+  `https://<user>.github.io/<repo>/`, not the domain root.
+- **Backend → Render.** [`render.yaml`](render.yaml) is a Render Blueprint
+  describing the web service (root dir `backend`, build command
+  `pip install -r requirements.txt`, start command `uvicorn app.main:app
+  --host 0.0.0.0 --port $PORT`, and the env vars it needs).
+  `OPENAI_API_KEY` is deliberately left out of the file (`sync: false`) —
+  it's set as a secret directly in the Render dashboard, never committed.
+
+**One-time setup steps** (do these once per environment, not per deploy):
+
+1. Create a Render Blueprint from this GitHub repo — Render reads
+   `render.yaml` and configures the service automatically.
+2. In the Render dashboard, set the `OPENAI_API_KEY` secret (and optionally
+   override `OPENAI_MODEL` / `OPENAI_IMAGE_MODEL` / `DAILY_REQUEST_CAP`).
+   Note the resulting service URL, e.g. `https://foodify-backend.onrender.com`.
+3. In the GitHub repo's Settings → Pages, set Source to "GitHub Actions".
+4. In Settings → Secrets and variables → Actions → Variables, add a repo
+   variable `VITE_API_URL` set to the Render URL from step 2 — this gets
+   baked into the frontend build so it knows where to call.
+5. Update `CORS_ORIGINS` in `render.yaml` (or the Render dashboard) to match
+   the actual GitHub Pages origin, e.g. `["https://<user>.github.io"]`.
+
+After that, every push to `main` redeploys both sides automatically —
+`deploy-frontend.yml` on any `frontend/**` change, Render on any backend
+change (via its own GitHub integration).
+
+**Known gaps**: Render's free tier sleeps when idle (cold start on the first
+request after a while) and has an ephemeral filesystem, so the local result
+cache (`backend/.cache/`, see TODOs below) won't persist across Render
+deploys/restarts the way it does on a local machine — every redeploy starts
+with a cold cache there.
+
 ### Open questions
 
 - [ ] Which target languages do we need to support at launch? (drives translation-quality testing)
@@ -95,7 +140,7 @@ Proposed flow: `client captures/uploads photo -> backend API -> recognition serv
 ### TODOs
 
 - [x] make sure we don't expose the api keys — `.env` files are gitignored in both `backend/` and `frontend/` and nothing is tracked in git; the frontend only ever calls our own backend, never OpenAI directly.
-- [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash, so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. Both the cache and the daily counter are in-memory/per-process (reset on restart, no size cap) — fine for local dev, but revisit with persistent storage or a hard spend cap before this handles real multi-user traffic.
+- [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash to a local JSON file (`backend/.cache/`), so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely and survives process restarts, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. The daily counter is still in-memory (resets on restart) and neither has a size cap — fine for local dev, but revisit with a real store/hard spend cap before this handles real multi-user traffic. Note Render's filesystem is ephemeral, so the disk cache won't survive deploys/restarts there.
 - [ ] display the chain of thoughts while fetching api results
-- [ ] add deployment instructions
+- [x] add deployment instructions — see the [Deployment](#deployment) section above for the setup steps and rationale, and [README.md#deployment](README.md#deployment) for the quick version.
 
