@@ -1,5 +1,7 @@
 import hashlib
+import json
 from datetime import date
+from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,10 +22,29 @@ app.add_middleware(
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
-# In-memory cache so repeat/duplicate photo uploads skip the paid OpenAI calls.
-# Per-process only (resets on restart, no size cap) — fine for local dev, but
-# revisit with a persistent/bounded cache before this serves real traffic.
-_result_cache: dict[str, IdentifyResponse] = {}
+# Cache so repeat/duplicate photo uploads skip the paid OpenAI calls, persisted
+# to a local JSON file so it survives `--reload` restarts during dev. No size
+# cap — fine for local dev, but revisit with a real store before real traffic.
+_CACHE_FILE = Path(__file__).resolve().parent.parent / ".cache" / "identify_cache.json"
+
+
+def _load_cache() -> dict[str, IdentifyResponse]:
+    if not _CACHE_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(_CACHE_FILE.read_text())
+        return {key: IdentifyResponse(**value) for key, value in raw.items()}
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return {}
+
+
+def _save_cache() -> None:
+    _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    raw = {key: value.model_dump() for key, value in _result_cache.items()}
+    _CACHE_FILE.write_text(json.dumps(raw))
+
+
+_result_cache: dict[str, IdentifyResponse] = _load_cache()
 
 # Daily cap on paid OpenAI calls (cache hits above don't count against it).
 # Counter lives in memory only, so it resets on restart as well as at midnight.
@@ -73,4 +94,5 @@ async def identify(
 
     result.image_url = generate_dish_image(result.food_name, result.food_visual_description)
     _result_cache[cache_key] = result
+    _save_cache()
     return result
