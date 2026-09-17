@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+const SLOW_REQUEST_MS = 1500
 
 interface IdentifyResult {
   food_name: string
@@ -19,6 +20,16 @@ function App() {
   const [result, setResult] = useState<IdentifyResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showLoader, setShowLoader] = useState(false)
+
+  useEffect(() => {
+    if (!loading) {
+      setShowLoader(false)
+      return
+    }
+    const timer = setTimeout(() => setShowLoader(true), SLOW_REQUEST_MS)
+    return () => clearTimeout(timer)
+  }, [loading])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null
@@ -58,8 +69,8 @@ function App() {
 
   return (
     <main className="page">
-      <h1>Foodify</h1>
-      <p>Every photo hides a food twin.</p>
+      <h1 className="logo">Foodify</h1>
+      <p className="tagline">Every photo hides a food twin.</p>
 
       <form onSubmit={handleSubmit} className="form">
         <input
@@ -71,8 +82,14 @@ function App() {
 
         {previewUrl && !result && <img src={previewUrl} alt="Preview" className="preview" />}
 
-        <button type="submit" disabled={!file || loading}>
-          {loading ? 'Finding a match…' : 'Find my food match'}
+        {showLoader && (
+          <div className="hourglass-loader" role="status" aria-label="Still working on it">
+            <span aria-hidden="true">⏳</span>
+          </div>
+        )}
+
+        <button type="submit" className="match-button" disabled={!file || loading}>
+          {loading ? 'Finding a match…' : '🥐 Find my food match'}
         </button>
       </form>
 
