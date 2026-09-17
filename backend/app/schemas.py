@@ -6,6 +6,6 @@ class IdentifyResponse(BaseModel):
     translated_name: str | None = None
     target_language: str | None = None
     description: str
-    likely_ingredients: list[str] = []
+    # likely_ingredients: list[str] = []  # paused: not used currently
     confidence: str
     image_url: str | None = None

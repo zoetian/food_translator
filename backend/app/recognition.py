@@ -15,7 +15,7 @@ _JSON_SCHEMA = {
         "translated_name": {"type": ["string", "null"]},
         "target_language": {"type": ["string", "null"]},
         "description": {"type": "string"},
-        "likely_ingredients": {"type": "array", "items": {"type": "string"}},
+        # "likely_ingredients": {"type": "array", "items": {"type": "string"}},  # paused: not used currently
         "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
     },
     "required": [
@@ -23,7 +23,7 @@ _JSON_SCHEMA = {
         "translated_name",
         "target_language",
         "description",
-        "likely_ingredients",
+        # "likely_ingredients",  # paused: not used currently
         "confidence",
     ],
     "additionalProperties": False,

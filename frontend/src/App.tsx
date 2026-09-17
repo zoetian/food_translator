@@ -8,7 +8,7 @@ interface IdentifyResult {
   translated_name: string | null
   target_language: string | null
   description: string
-  likely_ingredients: string[]
+  // likely_ingredients: string[]  // paused: not used currently
   confidence: string
   image_url: string | null
 }
@@ -90,10 +90,18 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
+      {/* paused: image generation is disabled while debugging the matched-keyword flow
       {result?.image_url && (
         <div className="matched-image">
           <img src={result.image_url} alt={result.dish_name} />
         </div>
+      )}
+      */}
+
+      {result && (
+        <p className="debug-keyword">
+          [DEBUG] Matched keyword (would be sent to image generation): {result.dish_name}
+        </p>
       )}
 
       {result && (
@@ -106,6 +114,7 @@ function App() {
             </p>
           )}
           <p>{result.description}</p>
+          {/* paused: ingredients are not used currently
           {result.likely_ingredients.length > 0 && (
             <ul>
               {result.likely_ingredients.map((ingredient) => (
@@ -113,6 +122,7 @@ function App() {
               ))}
             </ul>
           )}
+          */}
           <p className="confidence">Confidence: {result.confidence}</p>
         </section>
       )}
