@@ -4,11 +4,11 @@ import './App.css'
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 interface IdentifyResult {
-  dish_name: string
+  food_name: string
   translated_name: string | null
   target_language: string | null
-  description: string
-  // likely_ingredients: string[]  // paused: not used currently
+  food_visual_description: string
+  match_explanation: string
   confidence: string
   image_url: string | null
 }
@@ -90,39 +90,22 @@ function App() {
 
       {error && <p className="error">{error}</p>}
 
-      {/* paused: image generation is disabled while debugging the matched-keyword flow
       {result?.image_url && (
         <div className="matched-image">
-          <img src={result.image_url} alt={result.dish_name} />
+          <img src={result.image_url} alt={result.food_name} />
         </div>
-      )}
-      */}
-
-      {result && (
-        <p className="debug-keyword">
-          [DEBUG] Matched keyword (would be sent to image generation): {result.dish_name}
-        </p>
       )}
 
       {result && (
         <section className="result">
-          <h2>{result.dish_name}</h2>
+          <h2>{result.food_name}</h2>
           {result.translated_name && (
             <p className="translated-name">
               {result.translated_name}
               {result.target_language ? ` (${result.target_language})` : ''}
             </p>
           )}
-          <p>{result.description}</p>
-          {/* paused: ingredients are not used currently
-          {result.likely_ingredients.length > 0 && (
-            <ul>
-              {result.likely_ingredients.map((ingredient) => (
-                <li key={ingredient}>{ingredient}</li>
-              ))}
-            </ul>
-          )}
-          */}
+          <p>{result.food_visual_description}</p>
           <p className="confidence">Confidence: {result.confidence}</p>
         </section>
       )}

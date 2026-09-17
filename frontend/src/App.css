@@ -37,17 +37,6 @@
   border-radius: 8px;
 }
 
-.debug-keyword {
-  margin-top: 1.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #fff8e1;
-  border: 1px dashed #d4a017;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #7a5c00;
-  font-family: monospace;
-}
-
 .result {
   margin-top: 2rem;
   padding-top: 1rem;

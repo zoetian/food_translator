@@ -2,9 +2,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-
-# paused for debugging the matched-keyword flow — see note near the call site below
-# from .images import generate_dish_image
+from .images import generate_dish_image
 from .recognition import identify_dish
 from .schemas import IdentifyResponse
 
@@ -42,10 +40,5 @@ async def identify(
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Recognition failed: {exc}") from exc
 
-    # paused: skip image generation while debugging the matched-keyword flow.
-    # result.image_url = generate_dish_image(result.dish_name, result.description)
-    # result.image_url = generate_dish_image(
-    #     result.food_name,
-    #     result.food_visual_description,
-    # )
+    result.image_url = generate_dish_image(result.food_name, result.food_visual_description)
     return result

@@ -16,11 +16,6 @@ _JSON_SCHEMA = {
         "target_language": {"type": ["string", "null"]},
         "food_visual_description": {"type": "string"},
         "match_explanation": {"type": "string"},
-        # "likely_ingredients": {
-        #     "type": "array",
-        #     "items": {"type": "string"},
-        # },
-        # paused: not used currently
         "confidence": {
             "type": "string",
             "enum": ["low", "medium", "high"],
@@ -32,7 +27,6 @@ _JSON_SCHEMA = {
         "target_language",
         "food_visual_description",
         "match_explanation",
-        # "likely_ingredients", # paused: not used currently
         "confidence",
     ],
     "additionalProperties": False,

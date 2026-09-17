@@ -7,6 +7,5 @@ class IdentifyResponse(BaseModel):
     target_language: str | None = None
     food_visual_description: str
     match_explanation: str
-    # likely_ingredients: list[str] = []
     confidence: str
     image_url: str | None = None
