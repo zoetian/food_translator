@@ -1,4 +1,5 @@
 import hashlib
+from datetime import date
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +25,11 @@ ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 # revisit with a persistent/bounded cache before this serves real traffic.
 _result_cache: dict[str, IdentifyResponse] = {}
 
+# Daily cap on paid OpenAI calls (cache hits above don't count against it).
+# Counter lives in memory only, so it resets on restart as well as at midnight.
+_request_count = 0
+_request_count_date = date.today()
+
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
@@ -35,6 +41,8 @@ async def identify(
     photo: UploadFile = File(...),
     target_language: str = Form("English"),
 ) -> IdentifyResponse:
+    global _request_count, _request_count_date
+
     if photo.content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(status_code=415, detail="Upload a JPEG, PNG, or WebP image.")
 
@@ -45,6 +53,18 @@ async def identify(
     cache_key = f"{hashlib.sha256(image_bytes).hexdigest()}:{target_language}"
     if cache_key in _result_cache:
         return _result_cache[cache_key]
+
+    today = date.today()
+    if today != _request_count_date:
+        _request_count_date = today
+        _request_count = 0
+
+    if _request_count >= settings.daily_request_cap:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily request limit reached. Please try again tomorrow.",
+        )
+    _request_count += 1
 
     try:
         result = identify_dish(image_bytes, photo.content_type, target_language)

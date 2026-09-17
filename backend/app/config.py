@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_model: str = "gpt-5-mini"
     openai_image_model: str = "gpt-image-1"
+    daily_request_cap: int = 10
     cors_origins: list[str] = ["http://localhost:5173"]
 
     class Config:
