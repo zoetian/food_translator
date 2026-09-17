@@ -1,5 +1,27 @@
 # DevNotes
 
+### Running locally
+
+**Backend (FastAPI)**
+
+```
+cd backend
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env   # then fill in OPENAI_API_KEY
+.venv/bin/uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend (React + Vite)**
+
+```
+cd frontend
+npm install
+cp .env.example .env   # defaults to http://localhost:8000
+npm run dev
+```
+
+Then open http://localhost:5173.
 
 ## thoughts
 
@@ -112,7 +134,9 @@ backend deploy to two different hosts:
    Run URL from step 4 — this gets baked into the frontend build so it knows
    where to call.
 7. If your GitHub Pages origin isn't `https://<user>.github.io`, update the
-   `CORS_ORIGINS` value inside `deploy-backend.yml` to match.
+   `CORS_ORIGINS` value inside `deploy-backend.yml` to match — e.g. this repo
+   uses a custom domain (`https://zoetian.me`) for Pages, so `CORS_ORIGINS`
+   lists both that and the default `.github.io` origin.
 
 After that, every push to `main` redeploys both sides automatically —
 `deploy-frontend.yml` on any `frontend/**` change, `deploy-backend.yml` on
@@ -156,5 +180,5 @@ collaborators.
 - [x] make sure we don't expose the api keys — `.env` files are gitignored in both `backend/` and `frontend/` and nothing is tracked in git; the frontend only ever calls our own backend, never OpenAI directly.
 - [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash to a local JSON file (`backend/.cache/`), so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely and survives process restarts, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. The daily counter is still in-memory (resets on restart) and neither has a size cap — fine for local dev, but revisit with a real store/hard spend cap before this handles real multi-user traffic. Note Cloud Run's filesystem is ephemeral, so the disk cache won't survive deploys/restarts there.
 - [ ] display the chain of thoughts while fetching api results
-- [x] add deployment instructions — see the [Deployment](#deployment) section above for the setup steps and rationale, and [README.md#deployment](README.md#deployment) for the quick version.
+- [x] add deployment instructions — see the [Deployment](#deployment) section above for the setup steps and rationale.
 

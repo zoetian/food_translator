@@ -1,87 +1,61 @@
-# Foodify
+<!--
+  TODO: add a logo/icon (e.g. docs/icon.svg or docs/icon.png), then
+  uncomment this:
+  <p align="center">
+    <img src="docs/icon.svg" width="96" height="96" alt="Foodify icon" />
+  </p>
+-->
 
-Point a photo at anything — food, an animal, an object, a cartoon character — and Foodify finds the food it most visually resembles, then generates a picture of that imagined dish.
+<h1 align="center">Foodify</h1>
 
-See [DevNotes.md](DevNotes.md) for architecture and design decisions.
+<p align="center">
+  <strong>Every photo hides a food twin.</strong>
+  <br />
+  Point a photo at anything and find the food it most resembles.
+</p>
 
-## How it works
+<p align="center">
+  <a href="https://github.com/zoetian/food_translator/actions/workflows/deploy-frontend.yml"><img src="https://img.shields.io/github/actions/workflow/status/zoetian/food_translator/deploy-frontend.yml?style=flat-square&label=frontend" alt="Frontend deploy status" /></a>
+  <a href="https://github.com/zoetian/food_translator/actions/workflows/deploy-backend.yml"><img src="https://img.shields.io/github/actions/workflow/status/zoetian/food_translator/deploy-backend.yml?style=flat-square&label=backend" alt="Backend deploy status" /></a>
+  <a href="https://zoetian.me/food_translator/"><img src="https://img.shields.io/badge/demo-live-5b7fdb?style=flat-square" alt="Live demo" /></a>
+</p>
 
-1. You upload or snap a photo.
-2. A vision-capable LLM (GPT-5 mini by default, via OpenAI's Responses API) looks at the shape, color, texture, and pattern of the subject and invents the food it most resembles — it's not literal dish identification.
-3. OpenAI's image API generates a picture of that imagined food.
+<p align="center">
+  <a href="https://zoetian.me/food_translator/"><strong>Try the live demo →</strong></a>
+</p>
 
-💰 **Cost controls**: step 3 makes a paid image-generation call, so the backend caches results by photo hash (duplicate uploads are free, cached to `backend/.cache/` so it survives restarts) and caps calls that actually hit OpenAI at `DAILY_REQUEST_CAP` per day (default 10, see `.env.example`; this counter is in-memory and resets on restart). Fine for local dev, not yet built for real multi-user traffic (tracked in [DevNotes.md](DevNotes.md#todos)).
+<!--
+  TODO: add your demo GIF here — record a quick clip of the live site
+  (upload a photo -> click "Find my food match" -> reveal the result),
+  save it as docs/demo.gif, and this will render automatically.
+-->
+<p align="center"><img src="media/demo.png" alt="Foodify demo"></p>
 
-## Running locally
 
-### Backend (FastAPI)
+## Getting started
 
-```
-cd backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-cp .env.example .env   # then fill in OPENAI_API_KEY
-.venv/bin/uvicorn app.main:app --reload --port 8000
-```
+1. Open [the live demo](https://zoetian.me/food_translator/)
+2. Upload or snap a photo, or click **Fun example** for an instant demo.
+3. Click **Find my food match** and meet your food twin ✨
 
-### Frontend (React + Vite)
+The live demo shares a small daily quota to keep API costs in check — if
+it's exhausted, try again tomorrow, or run your own copy locally with
+your own OpenAI key (see Development below).
 
-```
-cd frontend
-npm install
-cp .env.example .env   # defaults to http://localhost:8000
-npm run dev
-```
+## Development
 
-Then open http://localhost:5173.
+Want to run Foodify locally, understand how it works under the hood, or
+deploy your own copy? See [DevNotes.md](DevNotes.md).
 
-## Deployment
+## Support this project
 
-GitHub Pages only serves static files, so it can host the frontend but not the
-FastAPI backend. The two deploy separately:
+<p>
+  <a href="https://www.buymeacoffee.com/zoetian">
+    <img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee">
+  </a>
+</p>
 
-### Backend → Google Cloud Run
+If Foodify made you smile, consider buying me a coffee — it helps cover
+hosting/API costs and keeps the live demo running.
 
-Cloud Run's free tier (~2M requests/month, scales to zero when idle) is a
-better fit for a low-traffic personal project than Render's paid-only
-"always on" plans. One-time setup in the [Google Cloud Console](https://console.cloud.google.com):
-
-1. Create (or pick) a GCP project and enable the **Cloud Run**, **Cloud
-   Build**, and **Artifact Registry** APIs for it.
-2. Create a service account with the **Cloud Run Admin**, **Cloud Build
-   Editor**, **Artifact Registry Writer**, and **Service Account User** roles.
-   Generate a JSON key for it.
-3. In this GitHub repo, Settings → Secrets and variables → Actions → **Secrets**,
-   add:
-   - `GCP_SA_KEY` — the full JSON key content from step 2.
-   - `GCP_PROJECT_ID` — your GCP project ID.
-   - `OPENAI_API_KEY` — your real OpenAI key (never committed to the repo).
-4. Push to `main` (or run manually from the Actions tab) —
-   [`.github/workflows/deploy-backend.yml`](.github/workflows/deploy-backend.yml)
-   builds [`backend/Dockerfile`](backend/Dockerfile) and deploys it to Cloud
-   Run as the `foodify-backend` service in `us-central1`.
-5. After the first deploy, note the service URL Cloud Run prints, e.g.
-   `https://foodify-backend-xxxxx.us-central1.run.app`.
-
-If your GitHub Pages URL isn't `https://<your-github-username>.github.io`,
-update the `CORS_ORIGINS` value inside
-[`.github/workflows/deploy-backend.yml`](.github/workflows/deploy-backend.yml)
-to match.
-
-Cloud Run still cold-starts after idle (same tradeoff as any scale-to-zero
-host), and its filesystem is ephemeral, so the local result cache
-(`backend/.cache/`) won't persist across deploys/restarts there the way it
-does locally.
-
-### Frontend → GitHub Pages
-
-1. In the repo's Settings → Pages, set Source to "GitHub Actions".
-2. In Settings → Secrets and variables → Actions → Variables, add a repo
-   variable `VITE_API_URL` set to your deployed Cloud Run URL (step 5 above).
-3. Push to `main` (or run the workflow manually from the Actions tab) —
-   [`.github/workflows/deploy-frontend.yml`](.github/workflows/deploy-frontend.yml)
-   builds `frontend/` and publishes it to Pages.
-4. The site will be live at `https://<your-github-username>.github.io/food_translator/`.
-
-If you rename or fork the repo, update the hardcoded `/food_translator/` base
-path in [`frontend/vite.config.ts`](frontend/vite.config.ts) to match.
+---
