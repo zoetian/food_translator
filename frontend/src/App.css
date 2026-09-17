@@ -40,6 +40,13 @@
   border-radius: 8px;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
 .match-button {
   padding: 0.9rem 2.2rem;
   font-size: 1.05rem;
@@ -51,6 +58,11 @@
   cursor: pointer;
   box-shadow: 0 4px 0 #8a5a2b, 0 6px 10px rgba(0, 0, 0, 0.15);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.match-button--compact {
+  padding: 0.55rem 1.3rem;
+  font-size: 0.85rem;
 }
 
 .match-button:hover:not(:disabled) {
@@ -124,10 +136,6 @@
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.description {
-  font-size: 0.95rem;
 }
 
 .translated-name {

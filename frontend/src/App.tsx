@@ -39,16 +39,13 @@ function App() {
     setPreviewUrl(selected ? URL.createObjectURL(selected) : null)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!file) return
-
+  async function submitPhoto(photoFile: File) {
     setLoading(true)
     setError(null)
     setResult(null)
 
     const formData = new FormData()
-    formData.append('photo', file)
+    formData.append('photo', photoFile)
 
     try {
       const res = await fetch(`${API_URL}/api/identify`, {
@@ -64,6 +61,26 @@ function App() {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!file) return
+    await submitPhoto(file)
+  }
+
+  async function handleFunExample() {
+    setError(null)
+    try {
+      const res = await fetch('/fun-example.png')
+      const blob = await res.blob()
+      const exampleFile = new File([blob], 'fun-example.png', { type: blob.type || 'image/png' })
+      setFile(exampleFile)
+      setPreviewUrl(URL.createObjectURL(exampleFile))
+      await submitPhoto(exampleFile)
+    } catch {
+      setError('Could not load the example image.')
     }
   }
 
@@ -88,9 +105,19 @@ function App() {
           </div>
         )}
 
-        <button type="submit" className="match-button" disabled={!file || loading}>
-          {loading ? 'Finding a match…' : '🥐 Find my food match'}
-        </button>
+        <div className="button-row">
+          <button type="submit" className="match-button match-button--compact" disabled={!file || loading}>
+            {loading ? 'Finding…' : '🥐 Find my food match'}
+          </button>
+          <button
+            type="button"
+            className="match-button match-button--compact"
+            onClick={handleFunExample}
+            disabled={loading}
+          >
+            🎲 Fun example
+          </button>
+        </div>
       </form>
 
       {error && <p className="error">{error}</p>}
