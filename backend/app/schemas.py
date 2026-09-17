@@ -8,3 +8,4 @@ class IdentifyResponse(BaseModel):
     description: str
     likely_ingredients: list[str] = []
     confidence: str
+    image_url: str | None = None

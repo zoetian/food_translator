@@ -53,8 +53,21 @@ def identify_dish(image_bytes: bytes, content_type: str, target_language: str) -
                             "or dessert it most resembles. Always provide a food association, "
                             "even when the image contains no actual food. "
 
-                            "Create a short, cute name combining the subject with the food when "
-                            "appropriate. Explain the visual resemblance in a playful but concise way. "
+                            "Ignore the subject's proper name, franchise, job, and scene context. "
+                            "Do not use the name of a known character in the result. "
+
+                            "Focus only on visible shape, color, pattern, and apparent texture. "
+                            "Privately consider at least three food candidates, then select the one "
+                            "that explains the greatest number of distinct visual features. "
+                            "Prefer a specific, imaginative association over generic choices such as "
+                            "'cream puff', 'cupcake', or 'donut'. "
+
+                            "The final name must follow this general pattern: "
+                            "'[visual or flavor modifier] + [specific food] + [generic subject type]'. "
+                            "For animals, use the species rather than the character's proper name. "
+                            "Output only the best candidate."
+
+                            "Explain the visual resemblance in a playful but concise way. "
                             f"Translate the result into {target_language}. "
 
                             "For example, a round, fluffy, tan-and-brown spotted cheetah might resemble "

@@ -28,6 +28,15 @@
   color: #c0392b;
 }
 
+.matched-image {
+  margin-top: 1.5rem;
+}
+
+.matched-image img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
 .result {
   margin-top: 2rem;
   padding-top: 1rem;

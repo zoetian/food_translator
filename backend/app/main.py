@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
+from .images import generate_dish_image
 from .recognition import identify_dish
 from .schemas import IdentifyResponse
 
@@ -35,6 +36,9 @@ async def identify(
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     try:
-        return identify_dish(image_bytes, photo.content_type, target_language)
+        result = identify_dish(image_bytes, photo.content_type, target_language)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Recognition failed: {exc}") from exc
+
+    result.image_url = generate_dish_image(result.dish_name, result.description)
+    return result

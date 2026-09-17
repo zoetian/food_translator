@@ -91,3 +91,10 @@ Proposed flow: `client captures/uploads photo -> backend API -> recognition serv
 
 **Recommendation**: launch with a vision-LLM (GPT-5 mini or Gemini Flash, pick based on final pricing/translation-quality bake-off) as the primary recognition+translation path, backed by `pgvector` for a growing curated fallback dataset — avoids standing up dedicated ML infra or a vector DB service before we have real usage data to justify it.
 
+
+### TODOs
+
+- make sure we don't expose the api keys
+- control and monitor the image api billing budget
+- display the chain of thoughts while fetching api results
+

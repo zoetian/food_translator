@@ -10,6 +10,7 @@ interface IdentifyResult {
   description: string
   likely_ingredients: string[]
   confidence: string
+  image_url: string | null
 }
 
 function App() {
@@ -59,7 +60,7 @@ function App() {
 
   return (
     <main className="page">
-      <h1>Food Translator</h1>
+      <h1>Foodify</h1>
       <p>Take or upload a photo of anything, and we'll find the food it most resembles.</p>
 
       <form onSubmit={handleSubmit} className="form">
@@ -88,6 +89,12 @@ function App() {
       </form>
 
       {error && <p className="error">{error}</p>}
+
+      {result?.image_url && (
+        <div className="matched-image">
+          <img src={result.image_url} alt={result.dish_name} />
+        </div>
+      )}
 
       {result && (
         <section className="result">
