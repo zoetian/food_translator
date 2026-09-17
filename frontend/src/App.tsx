@@ -145,7 +145,6 @@ function App() {
                 {result.target_language ? ` (${result.target_language})` : ''}
               </p>
             )}
-            <p className="description">{result.food_visual_description}</p>
           </div>
         </section>
       )}
