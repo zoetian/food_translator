@@ -4,14 +4,18 @@ from .config import settings
 
 _client = OpenAI(api_key=settings.openai_api_key)
 
-
-def generate_dish_image(dish_name: str, description: str) -> str | None:
+def generate_dish_image(food_name: str, food_visual_description: str) -> str | None:
     try:
         response = _client.images.generate(
             model=settings.openai_image_model,
             prompt=(
-                f"A fun, appetizing illustration of '{dish_name}': {description} "
-                "Bright, playful food photography style."
+                f"Create an appetizing image of one edible {food_name}. "
+                f"{food_visual_description} "
+                "Show food only. "
+                "Do not include animals, people, characters, mascots, faces, "
+                "eyes, mouths, ears, paws, fur, facial expressions, or "
+                "anthropomorphic features. "
+                "Bright, playful, polished food photography."
             ),
             size="1024x1024",
             n=1,

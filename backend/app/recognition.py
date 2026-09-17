@@ -11,19 +11,28 @@ _client = OpenAI(api_key=settings.openai_api_key)
 _JSON_SCHEMA = {
     "type": "object",
     "properties": {
-        "dish_name": {"type": "string"},
+        "food_name": {"type": "string"},
         "translated_name": {"type": ["string", "null"]},
         "target_language": {"type": ["string", "null"]},
-        "description": {"type": "string"},
-        # "likely_ingredients": {"type": "array", "items": {"type": "string"}},  # paused: not used currently
-        "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+        "food_visual_description": {"type": "string"},
+        "match_explanation": {"type": "string"},
+        # "likely_ingredients": {
+        #     "type": "array",
+        #     "items": {"type": "string"},
+        # },
+        # paused: not used currently
+        "confidence": {
+            "type": "string",
+            "enum": ["low", "medium", "high"],
+        },
     },
     "required": [
-        "dish_name",
+        "food_name",
         "translated_name",
         "target_language",
-        "description",
-        # "likely_ingredients",  # paused: not used currently
+        "food_visual_description",
+        "match_explanation",
+        # "likely_ingredients", # paused: not used currently
         "confidence",
     ],
     "additionalProperties": False,
@@ -62,17 +71,29 @@ def identify_dish(image_bytes: bytes, content_type: str, target_language: str) -
                             "Prefer a specific, imaginative association over generic choices such as "
                             "'cream puff', 'cupcake', or 'donut'. "
 
-                            "The final name must follow this general pattern: "
-                            "'[visual or flavor modifier] + [specific food] + [generic subject type]'. "
-                            "For animals, use the species rather than the character's proper name. "
+                            "The food_name field must contain only the name of an edible food or dish. "
+                            "Never include the source subject, animal species, person, character, object, "
+                            "franchise, or profession in food_name. "
+
+                            "The food_visual_description field must describe only the generated food's "
+                            "appearance, including its shape, color, texture, filling, toppings, and "
+                            "presentation. It must not mention the source image, animals, people, body "
+                            "parts, faces, fur, characters, or expressions. "
+
+                            "Use match_explanation separately to explain why the original subject visually "
+                            "resembles the selected food. This field may mention features of the original "
+                            "subject, but it will never be sent to the image generation model. "
                             "Output only the best candidate."
 
                             "Explain the visual resemblance in a playful but concise way. "
                             f"Translate the result into {target_language}. "
 
-                            "For example, a round, fluffy, tan-and-brown spotted cheetah might resemble "
-                            "a sesame mochi bun and could be called a 'Sesame Mochi Bun Cheetah'. "
-                            "Do not respond with 'no dish detected' merely because the subject is not edible."
+                            "# Example:\n"
+                            "food_name: Caramel-Dotted Mochi Bun\n"
+                            "food_visual_description: A round, golden-brown mochi bun with a soft, puffy "
+                            "surface and small dark caramelized spots.\n"
+                            "match_explanation: The subject's round cheeks resemble soft mochi buns, "
+                            "while the warm coloring and dark spots resemble caramelized toppings.\n"
                         )
                     },
                     {"type": "input_image", "image_url": data_url, "detail": "auto"},

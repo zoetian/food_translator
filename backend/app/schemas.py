@@ -2,10 +2,11 @@ from pydantic import BaseModel
 
 
 class IdentifyResponse(BaseModel):
-    dish_name: str
+    food_name: str
     translated_name: str | None = None
     target_language: str | None = None
-    description: str
-    # likely_ingredients: list[str] = []  # paused: not used currently
+    food_visual_description: str
+    match_explanation: str
+    # likely_ingredients: list[str] = []
     confidence: str
     image_url: str | None = None

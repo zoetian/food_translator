@@ -44,4 +44,8 @@ async def identify(
 
     # paused: skip image generation while debugging the matched-keyword flow.
     # result.image_url = generate_dish_image(result.dish_name, result.description)
+    # result.image_url = generate_dish_image(
+    #     result.food_name,
+    #     result.food_visual_description,
+    # )
     return result
