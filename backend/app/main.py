@@ -1,3 +1,5 @@
+import hashlib
+
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -17,6 +19,11 @@ app.add_middleware(
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
+# In-memory cache so repeat/duplicate photo uploads skip the paid OpenAI calls.
+# Per-process only (resets on restart, no size cap) — fine for local dev, but
+# revisit with a persistent/bounded cache before this serves real traffic.
+_result_cache: dict[str, IdentifyResponse] = {}
+
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
@@ -35,10 +42,15 @@ async def identify(
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
+    cache_key = f"{hashlib.sha256(image_bytes).hexdigest()}:{target_language}"
+    if cache_key in _result_cache:
+        return _result_cache[cache_key]
+
     try:
         result = identify_dish(image_bytes, photo.content_type, target_language)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Recognition failed: {exc}") from exc
 
     result.image_url = generate_dish_image(result.food_name, result.food_visual_description)
+    _result_cache[cache_key] = result
     return result
