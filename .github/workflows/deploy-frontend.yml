@@ -38,7 +38,7 @@ jobs:
         env:
           # Set this as a repo Variable (Settings -> Secrets and variables ->
           # Actions -> Variables) once the backend is deployed, e.g.
-          # https://foodify-backend.onrender.com
+          # https://foodify-backend-xxxxx.us-central1.run.app
           VITE_API_URL: ${{ vars.VITE_API_URL }}
 
       - uses: actions/upload-pages-artifact@v3

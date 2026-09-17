@@ -40,31 +40,44 @@ Then open http://localhost:5173.
 GitHub Pages only serves static files, so it can host the frontend but not the
 FastAPI backend. The two deploy separately:
 
-### Backend → Render
+### Backend → Google Cloud Run
 
-1. Push this repo to GitHub, then create a new [Render](https://render.com) Blueprint
-   from it — Render reads [`render.yaml`](render.yaml) and configures the
-   service automatically (root dir `backend`, build/start commands, env vars).
-2. In the Render dashboard, set the `OPENAI_API_KEY` secret (left out of
-   `render.yaml` on purpose — never commit real keys). Adjust `OPENAI_MODEL`,
-   `OPENAI_IMAGE_MODEL`, or `DAILY_REQUEST_CAP` there too if you want different
-   defaults.
-3. Once deployed, note the service URL, e.g. `https://foodify-backend.onrender.com`.
-4. Update `CORS_ORIGINS` in `render.yaml` (or directly in the Render dashboard)
-   to match your actual GitHub Pages URL if it differs from
-   `https://<your-github-username>.github.io`.
+Cloud Run's free tier (~2M requests/month, scales to zero when idle) is a
+better fit for a low-traffic personal project than Render's paid-only
+"always on" plans. One-time setup in the [Google Cloud Console](https://console.cloud.google.com):
 
-Render's free tier spins down when idle, so the first request after a while
-will be slow (cold start) — and its filesystem is ephemeral, so the local
-result cache (`backend/.cache/`) won't persist across deploys/restarts there
-the way it does locally.
+1. Create (or pick) a GCP project and enable the **Cloud Run**, **Cloud
+   Build**, and **Artifact Registry** APIs for it.
+2. Create a service account with the **Cloud Run Admin**, **Cloud Build
+   Editor**, **Artifact Registry Writer**, and **Service Account User** roles.
+   Generate a JSON key for it.
+3. In this GitHub repo, Settings → Secrets and variables → Actions → **Secrets**,
+   add:
+   - `GCP_SA_KEY` — the full JSON key content from step 2.
+   - `GCP_PROJECT_ID` — your GCP project ID.
+   - `OPENAI_API_KEY` — your real OpenAI key (never committed to the repo).
+4. Push to `main` (or run manually from the Actions tab) —
+   [`.github/workflows/deploy-backend.yml`](.github/workflows/deploy-backend.yml)
+   builds [`backend/Dockerfile`](backend/Dockerfile) and deploys it to Cloud
+   Run as the `foodify-backend` service in `us-central1`.
+5. After the first deploy, note the service URL Cloud Run prints, e.g.
+   `https://foodify-backend-xxxxx.us-central1.run.app`.
+
+If your GitHub Pages URL isn't `https://<your-github-username>.github.io`,
+update the `CORS_ORIGINS` value inside
+[`.github/workflows/deploy-backend.yml`](.github/workflows/deploy-backend.yml)
+to match.
+
+Cloud Run still cold-starts after idle (same tradeoff as any scale-to-zero
+host), and its filesystem is ephemeral, so the local result cache
+(`backend/.cache/`) won't persist across deploys/restarts there the way it
+does locally.
 
 ### Frontend → GitHub Pages
 
 1. In the repo's Settings → Pages, set Source to "GitHub Actions".
 2. In Settings → Secrets and variables → Actions → Variables, add a repo
-   variable `VITE_API_URL` set to your deployed Render backend URL (step 3
-   above).
+   variable `VITE_API_URL` set to your deployed Cloud Run URL (step 5 above).
 3. Push to `main` (or run the workflow manually from the Actions tab) —
    [`.github/workflows/deploy-frontend.yml`](.github/workflows/deploy-frontend.yml)
    builds `frontend/` and publishes it to Pages.

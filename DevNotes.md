@@ -82,36 +82,50 @@ backend deploy to two different hosts:
   '/food_translator/'` for production builds only (dev server stays at `/`),
   since a GitHub Pages project site is served at
   `https://<user>.github.io/<repo>/`, not the domain root.
-- **Backend → Render.** [`render.yaml`](render.yaml) is a Render Blueprint
-  describing the web service (root dir `backend`, build command
-  `pip install -r requirements.txt`, start command `uvicorn app.main:app
-  --host 0.0.0.0 --port $PORT`, and the env vars it needs).
-  `OPENAI_API_KEY` is deliberately left out of the file (`sync: false`) —
-  it's set as a secret directly in the Render dashboard, never committed.
+- **Backend → Google Cloud Run.** Originally set up on Render, but Render
+  dropped its free tier for always-on web services (cheapest plan is a flat
+  $7/mo) — not worth it for a low-traffic personal project. Switched to Cloud
+  Run: true pay-per-use serverless containers with a generous perpetual free
+  tier (~2M requests/month) that scales to zero when idle, so this realistically
+  costs $0. [`backend/Dockerfile`](backend/Dockerfile) packages the FastAPI
+  app; [`.github/workflows/deploy-backend.yml`](.github/workflows/deploy-backend.yml)
+  builds and deploys it via `gcloud run deploy` on every push to `main` that
+  touches `backend/**`. `OPENAI_API_KEY` and the GCP service-account
+  credentials are GitHub Actions secrets, never committed.
 
 **One-time setup steps** (do these once per environment, not per deploy):
 
-1. Create a Render Blueprint from this GitHub repo — Render reads
-   `render.yaml` and configures the service automatically.
-2. In the Render dashboard, set the `OPENAI_API_KEY` secret (and optionally
-   override `OPENAI_MODEL` / `OPENAI_IMAGE_MODEL` / `DAILY_REQUEST_CAP`).
-   Note the resulting service URL, e.g. `https://foodify-backend.onrender.com`.
-3. In the GitHub repo's Settings → Pages, set Source to "GitHub Actions".
-4. In Settings → Secrets and variables → Actions → Variables, add a repo
-   variable `VITE_API_URL` set to the Render URL from step 2 — this gets
-   baked into the frontend build so it knows where to call.
-5. Update `CORS_ORIGINS` in `render.yaml` (or the Render dashboard) to match
-   the actual GitHub Pages origin, e.g. `["https://<user>.github.io"]`.
+1. In the GCP Console, create/pick a project and enable the Cloud Run, Cloud
+   Build, and Artifact Registry APIs.
+2. Create a service account with Cloud Run Admin, Cloud Build Editor,
+   Artifact Registry Writer, and Service Account User roles; download its
+   JSON key.
+3. In the GitHub repo's Settings → Secrets and variables → Actions →
+   **Secrets**, add `GCP_SA_KEY` (the JSON key), `GCP_PROJECT_ID`, and
+   `OPENAI_API_KEY`.
+4. Push to `main` (or run `deploy-backend.yml` manually) — Cloud Run prints
+   the service URL on first deploy, e.g.
+   `https://foodify-backend-xxxxx.us-central1.run.app`.
+5. In the GitHub repo's Settings → Pages, set Source to "GitHub Actions".
+6. In Settings → Secrets and variables → Actions → **Variables** (not
+   Secrets — it's just a public URL), add `VITE_API_URL` set to the Cloud
+   Run URL from step 4 — this gets baked into the frontend build so it knows
+   where to call.
+7. If your GitHub Pages origin isn't `https://<user>.github.io`, update the
+   `CORS_ORIGINS` value inside `deploy-backend.yml` to match.
 
 After that, every push to `main` redeploys both sides automatically —
-`deploy-frontend.yml` on any `frontend/**` change, Render on any backend
-change (via its own GitHub integration).
+`deploy-frontend.yml` on any `frontend/**` change, `deploy-backend.yml` on
+any `backend/**` change.
 
-**Known gaps**: Render's free tier sleeps when idle (cold start on the first
-request after a while) and has an ephemeral filesystem, so the local result
-cache (`backend/.cache/`, see TODOs below) won't persist across Render
-deploys/restarts the way it does on a local machine — every redeploy starts
-with a cold cache there.
+**Known gaps**: Cloud Run still cold-starts after idle (same scale-to-zero
+tradeoff any free host has) and its filesystem is ephemeral, so the local
+result cache (`backend/.cache/`, see TODOs below) won't persist across Cloud
+Run deploys/restarts the way it does on a local machine — every redeploy
+starts with a cold cache there. The `OPENAI_API_KEY` env var is also visible
+to anyone with read access to the Cloud Run service's revision config;
+Secret Manager would be the more locked-down option if this ever has other
+collaborators.
 
 ### Open questions
 
@@ -140,7 +154,7 @@ with a cold cache there.
 ### TODOs
 
 - [x] make sure we don't expose the api keys — `.env` files are gitignored in both `backend/` and `frontend/` and nothing is tracked in git; the frontend only ever calls our own backend, never OpenAI directly.
-- [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash to a local JSON file (`backend/.cache/`), so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely and survives process restarts, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. The daily counter is still in-memory (resets on restart) and neither has a size cap — fine for local dev, but revisit with a real store/hard spend cap before this handles real multi-user traffic. Note Render's filesystem is ephemeral, so the disk cache won't survive deploys/restarts there.
+- [x] control and monitor the image api billing budget — `/api/identify` (`backend/app/main.py`) now (1) caches responses by image hash to a local JSON file (`backend/.cache/`), so a duplicate/repeat photo upload skips both the recognition and image-generation OpenAI calls entirely and survives process restarts, and (2) enforces a `DAILY_REQUEST_CAP` (default 10) on calls that actually hit OpenAI — cache hits don't count against it. The daily counter is still in-memory (resets on restart) and neither has a size cap — fine for local dev, but revisit with a real store/hard spend cap before this handles real multi-user traffic. Note Cloud Run's filesystem is ephemeral, so the disk cache won't survive deploys/restarts there.
 - [ ] display the chain of thoughts while fetching api results
 - [x] add deployment instructions — see the [Deployment](#deployment) section above for the setup steps and rationale, and [README.md#deployment](README.md#deployment) for the quick version.
 

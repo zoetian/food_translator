@@ -1,0 +1,42 @@
+name: Deploy backend to Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+env:
+  SERVICE: foodify-backend
+  REGION: us-central1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run
+        run: |
+          cat <<EOF > env-vars.yaml
+          OPENAI_API_KEY: "${{ secrets.OPENAI_API_KEY }}"
+          OPENAI_MODEL: "gpt-5-mini"
+          OPENAI_IMAGE_MODEL: "gpt-image-1"
+          DAILY_REQUEST_CAP: "10"
+          CORS_ORIGINS: '["https://zoetian.github.io"]'
+          EOF
+          gcloud run deploy "$SERVICE" \
+            --source backend \
+            --region "$REGION" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --allow-unauthenticated \
+            --env-vars-file env-vars.yaml
